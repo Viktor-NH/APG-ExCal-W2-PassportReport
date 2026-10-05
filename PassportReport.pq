@@ -65,12 +65,12 @@ let
     #"Reordered Columns6" = Table.ReorderColumns(#"Renamed Columns5",{"SourceID", "EmployeeUniqueID", "TransactionDate", "Shift", "CompanyID", "ProjectDepartment", "Project", "Task", "Amount", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}),
     
     #"Added WorkRule" =
-    Table.AddColumn(
-        #"Reordered Columns6",
-        "WorkRule",
-        each "",     // Business has requested WorkRule be blank for now
-        type text
-    ),
+        Table.AddColumn(
+            #"Reordered Columns6",
+            "WorkRule",
+            each "",     // Business has requested WorkRule be blank for now
+            type text
+        ),
 
     /*
     Previous WorkRule logic retained for future use:
@@ -129,45 +129,54 @@ let
     #"Reordered UKGIndirectActivity" = Table.ReorderColumns(#"Inserted UKGIndirectActivity",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", "WorkRule", "CompanyID", "ProjectDepartment", "UKGIndirectActivity", "Project", "Task", "Amount", "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}),
     
     #"Added UKGPayCodeDesc" =
-    Table.AddColumn(
-        #"Reordered UKGIndirectActivity",
-        "UKGPayCodeDesc",
-            each
-                let
-                    ShiftValue =
-                        if [#"StaffRight - Shift"] = null then
-                            ""
-                        else
-                            Text.Trim(Text.From([#"StaffRight - Shift"]))
-                in
+        Table.AddColumn(
+            #"Reordered UKGIndirectActivity",
+            "UKGPayCodeDesc",
+                each
+                    let
+                        ShiftValue =
+                            if [#"StaffRight - Shift"] = null then
+                                ""
+                            else
+                                Text.Trim(Text.From([#"StaffRight - Shift"]))
+                    in
 
-                    if ShiftValue = "" and [Piece] = "On Call Pay" then "ONCAL"
-                    else if ShiftValue = "" and [Piece] = "Subsistence NT" then "SubNT"
-                    else if ShiftValue = "" and [Piece] = "Subsistence" then "SubTa"
-                    else if ShiftValue = "Floating Holiday" then "Absn-Floating"
-                    else if ShiftValue = "Funeral Pay" then "JURY"
-                    else if ShiftValue = "Holiday" then "HOLDY"
-                    else if ShiftValue = "MI ESTA" then "Absn-Sick Hours"
-                    else if ShiftValue = "MN ESST" then "Absn-Sick Hours"
-                    else if ShiftValue = "NE Erned Sick" then "Absn-Sick Hours"
-                    else if ShiftValue = "PTO" then "Absn-PTO"
-                    else if ShiftValue = "Unpaid Leave" then "Unpaid Leave"
-                    else if ShiftValue = "Unpaid Time" then "UNPAID"
-                    else "",
+                        if ShiftValue = "" and [Piece] = "On Call Pay" then "ONCAL"
+                        else if ShiftValue = "" and [Piece] = "Subsistence NT" then "SubNT"
+                        else if ShiftValue = "" and [Piece] = "Subsistence" then "SubTa"
+                        else if ShiftValue = "Floating Holiday" then "Absn-Floating"
+                        else if ShiftValue = "Funeral Pay" then "JURY"
+                        else if ShiftValue = "Holiday" then "HOLDY"
+                        else if ShiftValue = "MI ESTA" then "Absn-Sick Hours"
+                        else if ShiftValue = "MN ESST" then "Absn-Sick Hours"
+                        else if ShiftValue = "NE Erned Sick" then "Absn-Sick Hours"
+                        else if ShiftValue = "PTO" then "Absn-PTO"
+                        else if ShiftValue = "Unpaid Leave" then "Unpaid Leave"
+                        else if ShiftValue = "Unpaid Time" then "UNPAID"
+                        else "",
+                type text
+            ),
+
+    #"Added TransType" =
+        Table.AddColumn(
+            #"Added UKGPayCodeDesc",
+            "TransType",
+            each
+                if List.Contains(
+                    {"1ST", "1OT", "1DT",
+                     "2ST", "2OT", "2DT",
+                     "3ST", "3OT", "3DT"},
+                    Text.Trim(Text.From([#"StaffRight - Shift"]))
+                )
+                then "Hours"
+                else "PayCodeEdit",
             type text
         ),
 
-    #"Added TransType" = Table.AddColumn(
-        #"Added UKGPayCodeDesc", 
-        "TransType", 
-        each 
-            if [UKGPayCodeDesc] = "UNPAID" then "PayCodeEdit"
-            else if [Piece] = "Hours" then "Hours" 
-            else "PayCodeEdit",
-        type text
-            ),
-    
-    #"Reordered UKGPayCodeDesc" = Table.ReorderColumns(#"Added TransType",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", "WorkRule", "CompanyID", "ProjectDepartment", "UKGIndirectActivity", "Project", "Task", "TransType", "Amount", "UKGPayCodeDesc", "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}),
+    #"Reordered UKGPayCodeDesc" = Table.ReorderColumns(#"Added TransType",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", 
+                                                                            "WorkRule", "CompanyID", "ProjectDepartment", "UKGIndirectActivity", "Project", "Task", "TransType", "Amount", "UKGPayCodeDesc", 
+                                                                            "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}
+                                                    ),
     
     #"Added PayCodeType" = Table.AddColumn(
         #"Reordered UKGPayCodeDesc", 
@@ -180,7 +189,10 @@ let
         type text
             ),
 
-    #"Reordered PayCodeType" = Table.ReorderColumns(#"Added PayCodeType",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", "WorkRule", "CompanyID", "ProjectDepartment", "UKGIndirectActivity", "Project", "Task", "TransType", "Amount", "PayCodeType", "UKGPayCodeDesc", "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}),
+    #"Reordered PayCodeType" = Table.ReorderColumns(#"Added PayCodeType",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", 
+                                                                            "WorkRule", "CompanyID", "ProjectDepartment", "UKGIndirectActivity", "Project", "Task", "TransType", "Amount", "PayCodeType", "UKGPayCodeDesc", 
+                                                                            "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}
+                                                    ),
     
     #"Added WorkType" =
         Table.AddColumn(#"Reordered PayCodeType", "WorkType", each if [ProjectDepartment] = null
@@ -188,7 +200,10 @@ let
                 then "Indirect"
                 else "Project"),
 
-    #"Reordered WorkType" = Table.ReorderColumns(#"Added WorkType",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", "WorkRule", "CompanyID", "ProjectDepartment", "WorkType", "UKGIndirectActivity", "Project", "Task", "TransType", "Amount", "PayCodeType", "UKGPayCodeDesc", "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}),
+    #"Reordered WorkType" = Table.ReorderColumns(#"Added WorkType",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", 
+                                                                    "WorkRule", "CompanyID", "ProjectDepartment", "WorkType", "UKGIndirectActivity", "Project", "Task", "TransType", "Amount", "PayCodeType", "UKGPayCodeDesc", 
+                                                                    "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}
+                                                ),
     
     #"Added ProjectClean" =
         Table.AddColumn(
@@ -213,11 +228,96 @@ let
             #"Removed Project",
             {{"ProjectClean","Project"}}
         ),
-    #"Reordered ProjectClean" = Table.ReorderColumns(#"Renamed ProjectClean",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", "WorkRule", "CompanyID", "ProjectDepartment", "Piece", "WorkType", "UKGIndirectActivity", "Project", "Task", "TASK NUMBER", "TASK NAME", "TransType", "Amount", "PayCodeType", "UKGPayCodeDesc", "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}),
+    #"Reordered ProjectClean" = Table.ReorderColumns(#"Renamed ProjectClean",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", 
+                                                                            "WorkRule", "CompanyID", "ProjectDepartment", "Piece", "WorkType", "UKGIndirectActivity", "Project", 
+                                                                            "Task", "TASK NUMBER", "TASK NAME", "TransType", "Amount", "PayCodeType", "UKGPayCodeDesc", "TaxLocation", 
+                                                                            "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}
+                                                    ),
+                                                    
     #"Renamed Columns" = Table.RenameColumns(#"Reordered ProjectClean",{{"TASK NUMBER", "TaskNumber"}, {"TASK NAME", "TaskName"}}),
 
+    #"Added ClearProjectFields" =
+        Table.AddColumn(
+            #"Renamed Columns",
+            "ClearProjectFields",
+            each
+                [TransType] = "PayCodeEdit"
+                    and not List.Contains(
+                        {"SubTa", "SubNT"},
+                        [UKGPayCodeDesc]
+                    ),
+            type logical
+        ),
+
+    #"Added ProjectClean2" =
+        Table.AddColumn(
+            #"Added ClearProjectFields",
+            "ProjectClean",
+            each
+                if [ClearProjectFields]
+                then null
+                else [Project],
+            type text
+        ),
+
+    #"Added TaskClean" =
+        Table.AddColumn(
+            #"Added ProjectClean2",
+            "TaskClean",
+            each
+                if [ClearProjectFields]
+                then null
+                else [Task],
+            type text
+        ),
+
+    #"Added TaskNumberClean" =
+        Table.AddColumn(
+            #"Added TaskClean",
+            "TaskNumberClean",
+            each
+                if [ClearProjectFields]
+                then null
+                else [TaskNumber],
+            type text
+        ),
+
+    #"Removed Original Project Fields" =
+        Table.RemoveColumns(
+            #"Added TaskNumberClean",
+            {
+                "Project",
+                "Task",
+                "TaskNumber"
+            }
+        ),
+
+    #"Renamed Clean Project Fields" =
+        Table.RenameColumns(
+            #"Removed Original Project Fields",
+            {
+                {"ProjectClean", "Project"},
+                {"TaskClean", "Task"},
+                {"TaskNumberClean", "TaskNumber"}
+            }
+        ),
+
+    #"Removed ClearProjectFields" =
+        Table.RemoveColumns(
+            #"Renamed Clean Project Fields",
+            {"ClearProjectFields"}
+        ),
+
+    #"Reordered ProjectClean2" = 
+        Table.ReorderColumns(
+            #"Removed ClearProjectFields",{"SourceID", "EmployeeUniqueID", "TransactionDate", "StaffRight - Shift", "Shift", "ShiftType", 
+                                    "WorkRule", "CompanyID", "ProjectDepartment", "Piece", "WorkType", "UKGIndirectActivity", 
+                                    "Project", "Task", "TaskNumber", "TaskName", "TransType", "Amount", "PayCodeType", "UKGPayCodeDesc", 
+                                    "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}
+        ),
+
     #"Updated Project" = Table.TransformColumns(
-        #"Renamed Columns",
+        #"Reordered ProjectClean2",
         {
             {"Project", 
             each 
