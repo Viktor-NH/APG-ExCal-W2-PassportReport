@@ -1,0 +1,6 @@
+.env*
+*.csv
+*.xlsx
+*.txt
+Archive/
+.vscode/
