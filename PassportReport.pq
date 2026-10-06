@@ -316,8 +316,13 @@ let
                                     "TaxLocation", "JobClass", "JobType", "Project#(lf)Description", "Category", "Category#(lf)Description", "Activity#(lf)Description", "JobCode_Xref.JobCode"}
         ),
 
+    #"Sorted TransactionDate" = Table.Sort(#"Reordered ProjectClean2",{{"EmployeeUniqueID", Order.Descending},
+                                                                        {"TransactionDate", Order.Ascending}                
+                                                                        }
+        ),
+
     #"Updated Project" = Table.TransformColumns(
-        #"Reordered ProjectClean2",
+        #"Sorted TransactionDate",
         {
             {"Project", 
             each 
@@ -325,7 +330,7 @@ let
                 else "L" & Text.From(_), 
                 type text}
         }
-    ),
+        ),
 
     // ---------------------------------------------------------
     // 1. Independent source and lookup counts
